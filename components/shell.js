@@ -12,23 +12,27 @@ export function AppShell({ children, compact = false }) {
       <div className="page-frame">
         <header className="topbar">
           <Link href="/" className="brand">
-            <div className="brand-mark">PM</div>
             <div>
               <div className="brand-title">PitchMirror</div>
               <div className="brand-subtitle">
                 {compact
                   ? "Live rehearsal room"
-                  : "Scenario-specific rehearsal rooms with live avatar feedback"}
+                  : "AI rehearsal room"}
               </div>
             </div>
           </Link>
           <button
             type="button"
             className="theme-toggle"
+            aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
             onClick={() => setTheme(isLight ? "dark" : "light")}
           >
-            <span>{isLight ? "Dark mode" : "Light mode"}</span>
-            <strong>{isLight ? "Moon" : "Sun"}</strong>
+            <span className={`theme-toggle-track ${isLight ? "light" : "dark"}`}>
+              <span className="theme-toggle-thumb">
+                <span className="theme-icon-sun" />
+                <span className="theme-icon-moon" />
+              </span>
+            </span>
           </button>
         </header>
         {children}

@@ -175,249 +175,212 @@ export function AgentDetailPage({ slug }) {
 
   return (
     <AppShell>
-      <div className="agent-layout">
-        <div className="detail-stack">
-          <div className="detail-block">
-            <div className="button-row" style={{ marginBottom: 18 }}>
-              <Link href="/" className="btn btn-secondary">
-                Back to agents
-              </Link>
-              <div className="eyebrow">{agent.role}</div>
-            </div>
-            <h1 className="hero-title" style={{ fontSize: "clamp(2.2rem, 5vw, 3.8rem)", marginTop: 0 }}>
-              {agent.name}
-            </h1>
-            <p className="hero-copy">{agent.longDescription}</p>
-            <div className="pill-row">
-              {agent.focus.map((item) => (
-                <span className="pill" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
+      <div className="page-stack">
+        <section className="detail-block page-header-card">
+          <div className="button-row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+            <Link href="/agents" className="btn btn-secondary">
+              <span aria-hidden="true">←</span> Back
+            </Link>
+            <div className="eyebrow">{agent.role}</div>
           </div>
+          <h1 className="hero-title page-title">{agent.name}</h1>
+          <p className="hero-copy page-copy">{agent.description}</p>
+          <div className="scenario-inline-card">
+            <span className="metric-label">Scenario</span>
+            <p className="muted-copy" style={{ margin: "8px 0 0" }}>{agent.scenario}</p>
+          </div>
+        </section>
 
-          <div className="grid-2">
-            <div className="detail-block">
-              <div className="section-title">Scenario</div>
-              <p className="muted-copy">{agent.scenario}</p>
+        <section className="metric-card">
+          <div className="section-title">Evaluation criteria</div>
+          <div className="criteria-grid compact-scroll">
+            {(agent.evaluationCriteria || []).map((criterion) => (
+              <div className="subtle-card criteria-card" key={criterion.label}>
+                <span className="metric-label">{criterion.label}</span>
+                <p className="muted-copy" style={{ marginBottom: 0 }}>
+                  {criterion.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="metric-card">
+          <div className="section-title">Create a new session</div>
+          <div className="setup-stack">
+            <div className="subtle-card">
+              <label className="label" htmlFor="session-name">
+                Session name <span className="required-mark">(Required)</span>
+              </label>
+              <input
+                id="session-name"
+                className="context-textarea"
+                type="text"
+                value={agentState.sessionName || ""}
+                onChange={(event) => {
+                  setLocalError("");
+                  patchAgent(slug, (current) => ({
+                    ...current,
+                    sessionName: event.target.value,
+                  }));
+                }}
+                placeholder={`Example: ${agent.name} practice`}
+                disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
+                style={{ minHeight: 52, resize: "none" }}
+              />
             </div>
-            <div className="detail-block">
-              <div className="section-title">Session rhythm</div>
-              <ul className="list">
-                {agent.flow.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
 
-          <div className="upload-card">
-            <div className="section-title">Session name</div>
-            <p className="muted-copy">
-              Give this rehearsal a short name so it is easy to find later in saved sessions.
-            </p>
-            <label className="label" htmlFor="session-name">
-              Required session name
-            </label>
-            <input
-              id="session-name"
-              className="context-textarea"
-              type="text"
-              value={agentState.sessionName || ""}
-              onChange={(event) => {
-                setLocalError("");
-                patchAgent(slug, (current) => ({
-                  ...current,
-                  sessionName: event.target.value,
-                }));
-              }}
-              placeholder={`Example: ${agent.name} practice`}
-              disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
-              style={{ minHeight: 52, resize: "none" }}
-            />
-          </div>
-
-          <div className="upload-card">
-            <div className="section-title">{agent.contextFieldLabel || "Optional context"}</div>
-            <p className="muted-copy">
-              {agent.contextFieldDescription || "Add any extra context you want this agent to use."}
-            </p>
-            <label className="label" htmlFor="agent-context">
-              Optional text context
-            </label>
-            <textarea
-              id="agent-context"
-              className="context-textarea"
-              value={agentState.customContextText || ""}
-              onChange={(event) =>
-                patchAgent(slug, (current) => ({
-                  ...current,
-                  customContextText: event.target.value,
-                }))
-              }
-              placeholder="Paste role notes, scenario details, priorities, or any custom instructions for this room."
-              disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
-            />
-          </div>
-
-          <div className="upload-card">
-            <div className="section-title">Supporting document</div>
-            <p className="muted-copy">
-              Upload a PDF deck or supporting brief and it will process
-              automatically. The start button stays disabled while the upload is
-              in progress, and no extra upload action is needed.
-            </p>
-            <label className="label" htmlFor="deck-upload">
-              Optional PDF
-            </label>
-            <input
-              id="deck-upload"
-              className="file-input"
-              type="file"
-              accept=".pdf,application/pdf"
-              onChange={handleFileChange}
-              disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
-            />
-            <div style={{ marginTop: 16 }}>
-              <UploadStatus upload={upload} />
-            </div>
-            {localError ? <p className="muted-copy" style={{ color: "var(--danger)" }}>{localError}</p> : null}
-            {upload.status === "success" ? (
-              <>
-                <div className="button-row" style={{ marginTop: 16 }}>
-                  <button type="button" className="btn btn-secondary" onClick={togglePreview}>
-                    {upload.previewOpen ? "Hide preview" : "Preview file"}
-                  </button>
-                </div>
-                {upload.contextPreview ? (
-                  <div className="subtle-card" style={{ marginTop: 16 }}>
-                    <div className="section-title">Prepared context preview</div>
-                    <p className="muted-copy" style={{ marginBottom: 0 }}>
-                      {upload.contextPreview}
-                    </p>
-                  </div>
-                ) : null}
-                {upload.previewOpen && upload.previewUrl ? (
-                  <iframe
-                    className="preview-frame"
-                    src={upload.previewUrl}
-                    title={`${upload.fileName} preview`}
-                  />
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="sidebar-stack">
-          <div className="metric-card">
-            <div className="section-title">Evaluation criteria</div>
-            <p className="muted-copy">
-              This agent will score each saved session on the following dimensions after the evaluation pipeline finishes.
-            </p>
-            <div className="metrics-grid">
-              {(agent.evaluationCriteria || []).map((criterion) => (
-                <div className="subtle-card" key={criterion.label}>
-                  <span className="metric-label">{criterion.label}</span>
-                  <p className="muted-copy" style={{ marginBottom: 0 }}>
-                    {criterion.description}
+            <div className="subtle-card">
+              <div className="section-title">Context</div>
+              <div className="context-grid">
+                <div className="subtle-card nested-card">
+                  <label className="label" htmlFor="agent-context">
+                    {agent.contextFieldLabel || "Optional role context"}
+                  </label>
+                  <p className="muted-copy field-hint">
+                    Add any role, scenario, or audience details you want this agent to use while asking questions.
                   </p>
+                  <textarea
+                    id="agent-context"
+                    className="context-textarea"
+                    value={agentState.customContextText || ""}
+                    onChange={(event) =>
+                      patchAgent(slug, (current) => ({
+                        ...current,
+                        customContextText: event.target.value,
+                      }))
+                    }
+                    placeholder={agent.contextFieldDescription || "Add any extra context you want this agent to use."}
+                    disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="metric-card">
-            <div className="section-title">Before you start</div>
-            <p className="muted-copy">
-              Mic permission is required before the session begins. The avatar
-              starts in the same tab, not a popup window, and uploads stay
-              locked while the session is live.
-            </p>
-            <div className="agent-actions" style={{ marginTop: 18 }}>
+                <div className="subtle-card nested-card">
+                  <label className="label" htmlFor="deck-upload">
+                    Supporting document
+                  </label>
+                  <p className="muted-copy field-hint">
+                    Upload a PDF if you want the session to pull grounded context from your document.
+                  </p>
+                  <input
+                    id="deck-upload"
+                    className="file-input"
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    onChange={handleFileChange}
+                    disabled={agentState.session.status === "active" || agentState.session.status === "starting"}
+                  />
+                  <div style={{ marginTop: 14 }}>
+                    <UploadStatus upload={upload} />
+                  </div>
+                  {upload.status === "uploading" ? (
+                    <div className="loader-block" style={{ marginTop: 14 }}>
+                      <span className="loader-spinner" />
+                      <div className="loader-lines">
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  ) : null}
+                  {upload.status === "success" ? (
+                    <div className="upload-preview-stack">
+                      <div className="button-row" style={{ marginTop: 14 }}>
+                        <button type="button" className="btn btn-secondary" onClick={togglePreview}>
+                          {upload.previewOpen ? "Hide preview" : "Show preview"}
+                        </button>
+                      </div>
+                      {upload.contextPreview ? (
+                        <details className="preview-disclosure">
+                          <summary>Prepared context</summary>
+                          <p className="muted-copy" style={{ marginBottom: 0 }}>
+                            {upload.contextPreview}
+                          </p>
+                        </details>
+                      ) : null}
+                      {upload.previewOpen && upload.previewUrl ? (
+                        <iframe
+                          className="preview-frame"
+                          src={upload.previewUrl}
+                          title={`${upload.fileName} preview`}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="agent-actions agent-actions-centered">
               <button
                 type="button"
                 className="btn btn-primary"
                 disabled={!canStart}
                 onClick={startSession}
               >
-                {upload.status === "uploading" ? "Preparing upload..." : "Start session"}
+                {upload.status === "uploading" ? "Preparing..." : "Start session"}
               </button>
             </div>
             {!agentState.sessionName?.trim() ? (
-              <p className="muted-copy" style={{ color: "var(--danger)", marginBottom: 0 }}>
-                Add a session name before starting.
-              </p>
+              <p className="muted-copy form-note-error">Add a session name to continue.</p>
             ) : null}
-            {localError ? (
-              <p className="muted-copy" style={{ color: "var(--danger)", marginBottom: 0 }}>
-                {localError}
-              </p>
-            ) : null}
+            {localError ? <p className="muted-copy form-note-error">{localError}</p> : null}
           </div>
+        </section>
 
-          <div className="metric-card">
-            <div className="button-row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div className="section-title">
-                Past sessions{justEnded ? " • updated" : ""}
-              </div>
-              {pastSessions.length ? (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => clearAgentSessions(slug)}
-                >
-                  Delete history
-                </button>
-              ) : null}
-            </div>
-            <div className="sidebar-stack">
-              {pastSessions.length ? (
-                pastSessions.map((session) => (
-                  <Link
-                    href={`/agents/${slug}/sessions/${session.id}`}
-                    className="session-list-item"
-                    key={session.id}
-                  >
-                    <div className="session-list-top">
-                      <strong>{session.sessionName || new Date(session.endedAt).toLocaleString()}</strong>
-                      <span className="pill">{session.durationLabel}</span>
-                    </div>
-                    <p className="muted-copy" style={{ margin: "8px 0 0" }}>
-                      {new Date(session.endedAt).toLocaleString()}
-                    </p>
-                    <p className="muted-copy" style={{ margin: "6px 0 0" }}>
-                      {session.upload?.fileName || "No supporting file"}
-                    </p>
-                    <div style={{ marginTop: 10 }}>
-                      {session.evaluation?.status === "processing" ? (
-                        <div className="status-chip status-warning">
-                          <span className="status-dot" />
-                          Evaluation processing...
-                        </div>
-                      ) : session.evaluation?.status === "failed" ? (
-                        <div className="status-chip status-danger">
-                          <span className="status-dot" />
-                          Evaluation failed
-                        </div>
-                      ) : (
-                        <div className="status-chip status-success">
-                          <span className="status-dot" />
-                          Evaluation ready
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="empty-state">
-                  No saved sessions yet. End a session and it will appear here.
-                </div>
-              )}
-            </div>
+        <section className="metric-card">
+          <div className="button-row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div className="section-title">Past sessions{justEnded ? " • updated" : ""}</div>
+            {pastSessions.length ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => clearAgentSessions(slug)}
+              >
+                Delete history
+              </button>
+            ) : null}
           </div>
-        </div>
+          {pastSessions.length ? (
+            <div className="session-list compact-scroll">
+              {pastSessions.map((session) => (
+                <Link
+                  href={`/agents/${slug}/sessions/${session.id}`}
+                  className="session-list-item session-card-wide"
+                  key={session.id}
+                >
+                  <div className="session-list-top">
+                    <strong>{session.sessionName || "Untitled session"}</strong>
+                    <span className="pill">{session.durationLabel}</span>
+                  </div>
+                  <div className="session-meta-grid">
+                    <span>{new Date(session.endedAt).toLocaleString()}</span>
+                    <span>{session.upload?.fileName || "No supporting file"}</span>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    {session.evaluation?.status === "processing" ? (
+                      <div className="status-chip status-warning">
+                        <span className="status-dot" />
+                        Evaluation processing...
+                      </div>
+                    ) : session.evaluation?.status === "failed" ? (
+                      <div className="status-chip status-danger">
+                        <span className="status-dot" />
+                        Evaluation failed
+                      </div>
+                    ) : (
+                      <div className="status-chip status-success">
+                        <span className="status-dot" />
+                        Evaluation ready
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">No past sessions yet.</div>
+          )}
+        </section>
       </div>
     </AppShell>
   );

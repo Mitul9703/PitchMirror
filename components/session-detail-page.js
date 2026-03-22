@@ -14,6 +14,18 @@ function domainLabel(url) {
   }
 }
 
+function resourceBadge(kind) {
+  if ((kind || "").toLowerCase() === "youtube") {
+    return (
+      <span className="resource-icon youtube" aria-hidden="true">
+        <span className="youtube-play" />
+      </span>
+    );
+  }
+
+  return <span className="resource-kind">{kind || "resource"}</span>;
+}
+
 export function SessionDetailPage({ slug, sessionId }) {
   const { state, requestResourceFetch, requestSessionComparison } = useAppState();
   const agent = AGENT_LOOKUP[slug];
@@ -50,6 +62,7 @@ export function SessionDetailPage({ slug, sessionId }) {
   const [selectedComparisonId, setSelectedComparisonId] = useState(
     comparison.baselineSessionId || comparisonOptions[0]?.id || "",
   );
+  const [isGuidanceOpen, setIsGuidanceOpen] = useState(true);
 
   useEffect(() => {
     const preferredId =
@@ -62,178 +75,275 @@ export function SessionDetailPage({ slug, sessionId }) {
 
   return (
     <AppShell>
-      <div className="agent-layout">
-        <div className="detail-stack">
-          <div className="detail-block">
-            <div className="button-row" style={{ marginBottom: 18 }}>
-              <Link href={`/agents/${slug}`} className="btn btn-secondary">
-                Back to {agent.name}
-              </Link>
-              <div className="eyebrow">Saved session</div>
-            </div>
-            <h1 className="hero-title" style={{ fontSize: "clamp(2rem, 4vw, 3.4rem)", marginTop: 0 }}>
-              {session.sessionName || `${agent.name} session`}
-            </h1>
-            <p className="hero-copy">
-              Ended {new Date(session.endedAt).toLocaleString()} with a duration of {session.durationLabel}.
-            </p>
+      <div className="page-stack">
+        <section className="detail-block page-header-card">
+          <div className="button-row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+            <Link href={`/agents/${slug}`} className="btn btn-secondary">
+              <span aria-hidden="true">←</span> Back
+            </Link>
+            <div className="eyebrow">Saved session</div>
           </div>
+          <h1 className="hero-title page-title">
+            {session.sessionName || `${agent.name} session`}
+          </h1>
+          <p className="hero-copy page-copy">
+            Ended {new Date(session.endedAt).toLocaleString()} with duration {session.durationLabel}.
+          </p>
+        </section>
 
-          {session.coding ? (
-            <div className="detail-block">
-              <div className="section-title">Coding workspace</div>
-              <p className="muted-copy" style={{ marginTop: 0 }}>
-                Final language selection: {session.coding.language || "Unspecified"}
+        <section className="metric-card">
+          <div className="section-title">Session info</div>
+          <div className="session-info-grid">
+            <div className="subtle-card">
+              <span className="metric-label">Agent</span>
+              <div className="metric-value">{agent.name}</div>
+            </div>
+            <div className="subtle-card">
+              <span className="metric-label">File</span>
+              <div className="metric-value">{session.upload?.fileName || "No file"}</div>
+            </div>
+          </div>
+          {session.customContext ? (
+            <details className="content-disclosure" open={false}>
+              <summary>Context</summary>
+              <p className="muted-copy" style={{ marginBottom: 0 }}>
+                {session.customContext}
               </p>
-              <div className="subtle-card">
-                <div className="section-title">Final code</div>
-                <pre className="code-block">{session.coding.finalCode || "// No code was saved."}</pre>
-              </div>
-            </div>
+            </details>
           ) : null}
+          {session.upload?.contextPreview ? (
+            <details className="content-disclosure" open={false}>
+              <summary>Prepared file context</summary>
+              <p className="muted-copy" style={{ marginBottom: 0 }}>
+                {session.upload.contextPreview}
+              </p>
+            </details>
+          ) : null}
+          {session.coding ? (
+            <details className="content-disclosure" open={false}>
+              <summary>Final code • {session.coding.language || "Unspecified"}</summary>
+              <pre className="code-block">{session.coding.finalCode || "// No code was saved."}</pre>
+            </details>
+          ) : null}
+        </section>
 
-          <div className="detail-block">
-            <div className="section-title">Transcript</div>
-            <div className="transcript-list" style={{ maxHeight: "none" }}>
-              {session.transcript.length ? (
-                session.transcript.map((entry) => (
-                  <div className="transcript-item" key={entry.id}>
-                    <div className="transcript-role">{entry.role}</div>
-                    <p className="transcript-text">{entry.text}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">No transcript was saved for this session.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="sidebar-stack">
-          <div className="metric-card">
-            <div className="section-title">Session information</div>
-            <div className="sidebar-stack">
-              <div className="subtle-card">
-                <span className="metric-label">Session name</span>
-                <div className="metric-value">{session.sessionName || "Untitled session"}</div>
+        <section className="metric-card">
+          <div className="section-title">Evaluation</div>
+          {evaluation.status === "processing" ? (
+            <div className="subtle-card">
+              <div className="status-chip status-warning">
+                <span className="status-dot" />
+                Evaluation processing...
               </div>
-              <div className="subtle-card">
-                <span className="metric-label">Agent</span>
-                <div className="metric-value">{agent.name}</div>
-              </div>
-              <div className="subtle-card">
-                <span className="metric-label">Uploaded file</span>
-                <div className="metric-value">
-                  {session.upload?.fileName || "No supporting file"}
+              <div className="loader-block">
+                <span className="loader-spinner" />
+                <div className="loader-lines">
+                  <span />
+                  <span />
+                  <span />
                 </div>
               </div>
             </div>
-            {session.upload?.contextPreview ? (
-              <div className="subtle-card" style={{ marginTop: 16 }}>
-                <div className="section-title">Prepared file context</div>
-                <p className="muted-copy" style={{ marginBottom: 0 }}>
-                  {session.upload.contextPreview}
-                </p>
+          ) : evaluation.status === "failed" ? (
+            <div className="subtle-card">
+              <div className="status-chip status-danger">
+                <span className="status-dot" />
+                Evaluation failed
               </div>
-            ) : null}
-            {session.customContext ? (
-              <div className="subtle-card" style={{ marginTop: 16 }}>
-                <div className="section-title">Extra session context</div>
-                <p className="muted-copy" style={{ marginBottom: 0 }}>
-                  {session.customContext}
-                </p>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="metric-card">
-            <div className="section-title">Evaluation</div>
-            {evaluation.status === "processing" ? (
-              <div className="subtle-card">
-                <div className="status-chip status-warning">
-                  <span className="status-dot" />
-                  Evaluation processing...
-                </div>
-                <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                  This evaluation job is analyzing the transcript and any uploaded
-                  file context. Refresh is not required; it will update automatically
-                  when ready.
-                </p>
-              </div>
-            ) : evaluation.status === "failed" ? (
-              <div className="subtle-card">
-                <div className="status-chip status-danger">
-                  <span className="status-dot" />
-                  Evaluation failed
-                </div>
-                <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                  {evaluation.error || "The evaluation job could not be completed."}
-                </p>
-              </div>
-            ) : (
-              <>
+              <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
+                {evaluation.error || "The evaluation could not be completed."}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="evaluation-shell">
                 <div className="dashboard-score">
                   {evaluation.result.score}/100
                 </div>
-                <p className="muted-copy">{evaluation.result.summary}</p>
-                <div className="metrics-grid">
-                  {evaluation.result.metrics.map((metric) => (
-                    <div className="subtle-card" key={metric.label}>
-                      <span className="metric-label">{metric.label}</span>
-                      <div className="metric-value">{metric.value}%</div>
-                      <div className="progress" style={{ marginTop: 10 }}>
-                        <span style={{ width: `${metric.value}%` }} />
-                      </div>
-                      {metric.justification ? (
-                        <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                          {metric.justification}
-                        </p>
-                      ) : null}
+                <p className="muted-copy" style={{ maxWidth: 720 }}>{evaluation.result.summary}</p>
+              </div>
+              <div className="metrics-grid compact-scroll">
+                {evaluation.result.metrics.map((metric) => (
+                  <div className="subtle-card" key={metric.label}>
+                    <span className="metric-label">{metric.label}</span>
+                    <div className="metric-value">{metric.value}%</div>
+                    <div className="progress" style={{ marginTop: 10 }}>
+                      <span style={{ width: `${metric.value}%` }} />
                     </div>
-                  ))}
-                </div>
-                <div className="subtle-card" style={{ marginTop: 16 }}>
-                  <div className="section-title">Strengths</div>
-                  <ul className="list">
-                    {evaluation.result.strengths.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="subtle-card" style={{ marginTop: 16 }}>
-                  <div className="section-title">Improvements</div>
-                  <ul className="list">
+                    {metric.justification ? (
+                      <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
+                        {metric.justification}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <div className="grid-2" style={{ marginTop: 16 }}>
+                <div className={`content-disclosure ${isGuidanceOpen ? "is-open" : ""}`}>
+                  <button
+                    type="button"
+                    className="disclosure-toggle"
+                    aria-expanded={isGuidanceOpen}
+                    onClick={() => setIsGuidanceOpen((current) => !current)}
+                  >
+                    <span>Improvements</span>
+                  </button>
+                  {isGuidanceOpen ? (
+                  <ul className="list compact-scroll">
                     {evaluation.result.improvements.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
+                  ) : null}
                 </div>
                 {evaluation.result.recommendations?.length ? (
-                  <div className="subtle-card" style={{ marginTop: 16 }}>
-                    <div className="section-title">Recommended next reps</div>
-                    <ul className="list">
-                      {evaluation.result.recommendations.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
+                  <div className={`content-disclosure ${isGuidanceOpen ? "is-open" : ""}`}>
+                    <button
+                      type="button"
+                      className="disclosure-toggle"
+                      aria-expanded={isGuidanceOpen}
+                      onClick={() => setIsGuidanceOpen((current) => !current)}
+                    >
+                      <span>Next steps</span>
+                    </button>
+                    {isGuidanceOpen ? (
+                      <ul className="list compact-scroll">
+                        {(evaluation.result.recommendations || []).map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                 ) : null}
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
+        </section>
 
-          <div className="metric-card">
-            <div className="section-title">Session comparison</div>
+        <section className="metric-card">
+          <div className="section-title">Improvement resources</div>
+          {resources.status === "idle" ? (
+            <div className="subtle-card">
+              <p className="muted-copy" style={{ margin: 0 }}>
+                Fetch links for the main improvement areas from this session.
+              </p>
+              {resources.briefs?.length ? (
+                <div className="button-row" style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    className="btn btn-accent"
+                    onClick={() => requestResourceFetch(slug, sessionId)}
+                  >
+                    Fetch resources
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {resources.status === "processing" ? (
+            <div className="subtle-card">
+              <div className="status-chip status-warning">
+                <span className="status-dot" />
+                Finding resources...
+              </div>
+              <div className="loader-block">
+                <span className="loader-spinner" />
+                <div className="loader-lines">
+                  <span />
+                  <span />
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {resources.status === "failed" ? (
+            <div className="subtle-card">
+              <div className="status-chip status-danger">
+                <span className="status-dot" />
+                Resource search failed
+              </div>
+              <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
+                {resources.error || "Resources could not be loaded."}
+              </p>
+              {resources.briefs?.length ? (
+                <div className="button-row" style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => requestResourceFetch(slug, sessionId)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {resources.status === "completed" && resources.topics?.length ? (
+            <div className="resource-accordion">
+              {resources.topics.map((topic, index) => (
+                <details
+                  className="resource-group"
+                  key={topic.id || topic.topic}
+                  open={index === 0}
+                >
+                    <summary className="resource-summary">
+                      <div>
+                        <div className="resource-topic">{topic.topic}</div>
+                      <p className="muted-copy" style={{ margin: "6px 0 0" }}>
+                        {topic.whyThisMatters}
+                      </p>
+                      </div>
+                      <span className="pill resource-count-pill">
+                        {topic.items?.length || 0}
+                      </span>
+                    </summary>
+                  <div className="resource-grid">
+                      {(topic.items || []).map((item) => (
+                        <a
+                          key={`${topic.id}-${item.url}`}
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                          className="resource-card"
+                        >
+                          <div className="button-row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+                            {resourceBadge(item.type)}
+                            <span className="metric-label">{item.source || domainLabel(item.url)}</span>
+                          </div>
+                          <div className="resource-title">{item.title}</div>
+                          <p className="muted-copy" style={{ marginTop: 10, marginBottom: 12 }}>
+                            {item.reason}
+                          </p>
+                          <span className="link-button icon-link" aria-label={`Open ${domainLabel(item.url)}`}>
+                            ↗
+                          </span>
+                        </a>
+                      ))}
+                  </div>
+                </details>
+              ))}
+            </div>
+          ) : null}
+          {resources.status === "completed" && !resources.topics?.length ? (
+            <div className="subtle-card">
+              <p className="muted-copy" style={{ margin: 0 }}>
+                No resources saved for this session.
+              </p>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="metric-card">
+          <div className="section-title">Session comparison</div>
             {evaluation.status !== "completed" ? (
               <div className="subtle-card">
                 <p className="muted-copy" style={{ margin: 0 }}>
-                  Finish the evaluation first, then compare this session with another saved {agent.name.toLowerCase()} session.
+                  Finish the evaluation first to compare this session.
                 </p>
               </div>
             ) : !comparisonOptions.length ? (
               <div className="subtle-card">
                 <p className="muted-copy" style={{ margin: 0 }}>
-                  Save at least one more completed {agent.name.toLowerCase()} session to compare progress here.
+                  Save one more completed session to compare progress here.
                 </p>
               </div>
             ) : (
@@ -253,7 +363,7 @@ export function SessionDetailPage({ slug, sessionId }) {
                     </select>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-accent"
                       disabled={!selectedComparisonId || comparison.status === "processing"}
                       onClick={() =>
                         requestSessionComparison(slug, sessionId, selectedComparisonId)
@@ -272,9 +382,13 @@ export function SessionDetailPage({ slug, sessionId }) {
                       <span className="status-dot" />
                       Comparison processing...
                     </div>
-                    <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                      We are checking whether this session moved the rubric in a better direction.
-                    </p>
+                    <div className="loader-block">
+                      <span className="loader-spinner" />
+                      <div className="loader-lines">
+                        <span />
+                        <span />
+                      </div>
+                    </div>
                   </div>
                 ) : null}
 
@@ -337,132 +451,23 @@ export function SessionDetailPage({ slug, sessionId }) {
                 ) : null}
               </>
             )}
-          </div>
+        </section>
 
-          <div className="metric-card">
-            <div className="section-title">Improvement resources</div>
-            {resources.status === "idle" ? (
-              <div className="subtle-card">
-                <p className="muted-copy" style={{ margin: 0 }}>
-                  Evaluation found targeted improvement themes. Fetch resources only
-                  if you want videos, articles, and practice links for this session.
-                </p>
-                {resources.briefs?.length ? (
-                  <div className="button-row" style={{ marginTop: 14 }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => requestResourceFetch(slug, sessionId)}
-                    >
-                      Fetch resources
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            {resources.status === "processing" ? (
-              <div className="subtle-card">
-                <div className="status-chip status-warning">
-                  <span className="status-dot" />
-                  Finding resources...
+        <section className="detail-block">
+          <div className="section-title">Transcript</div>
+          <div className="transcript-list transcript-scroll">
+            {session.transcript.length ? (
+              session.transcript.map((entry) => (
+                <div className="transcript-item" key={entry.id}>
+                  <div className="transcript-role">{entry.role}</div>
+                  <p className="transcript-text">{entry.text}</p>
                 </div>
-                <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                  TinyFish is gathering videos, articles, and websites for the most
-                  important improvement themes from this session.
-                </p>
-              </div>
-            ) : null}
-            {resources.status === "failed" ? (
-              <div className="subtle-card">
-                <div className="status-chip status-danger">
-                  <span className="status-dot" />
-                  Resource search failed
-                </div>
-                <p className="muted-copy" style={{ marginTop: 12, marginBottom: 0 }}>
-                  {resources.error || "We finished the evaluation, but the web resource search did not complete."}
-                </p>
-                {resources.briefs?.length ? (
-                  <div className="button-row" style={{ marginTop: 14 }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => requestResourceFetch(slug, sessionId)}
-                    >
-                      Try again
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            {resources.status === "completed" && resources.topics?.length ? (
-              <div className="resource-accordion">
-                {resources.topics.map((topic, index) => (
-                  <details
-                    className="resource-group"
-                    key={topic.id || topic.topic}
-                    open={index === 0}
-                  >
-                    <summary className="resource-summary">
-                      <div>
-                        <div className="resource-topic">{topic.topic}</div>
-                        <p className="muted-copy" style={{ margin: "6px 0 0" }}>
-                          {topic.whyThisMatters}
-                        </p>
-                      </div>
-                      <span className="pill">
-                        {topic.items?.length || 0} resources
-                      </span>
-                    </summary>
-                    <div className="resource-grid">
-                      {(topic.items || []).map((item) => (
-                        <a
-                          key={`${topic.id}-${item.url}`}
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="resource-card"
-                        >
-                          <div className="button-row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-                            <span className="resource-kind">{item.type || "resource"}</span>
-                            <span className="metric-label">{item.source || domainLabel(item.url)}</span>
-                          </div>
-                          <div className="resource-title">{item.title}</div>
-                          <p className="muted-copy" style={{ marginTop: 10, marginBottom: 12 }}>
-                            {item.reason}
-                          </p>
-                          <span className="link-button">
-                            Open {domainLabel(item.url)}
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            ) : null}
-            {resources.status === "completed" && !resources.topics?.length ? (
-              <div className="subtle-card">
-                <p className="muted-copy" style={{ margin: 0 }}>
-                  No targeted resources were saved for this session.
-                </p>
-              </div>
-            ) : null}
+              ))
+            ) : (
+              <div className="empty-state">No transcript was saved for this session.</div>
+            )}
           </div>
-
-          <div className="metric-card">
-            <div className="section-title">Evaluation criteria</div>
-            <div className="sidebar-stack">
-              {(agent.evaluationCriteria || []).map((criterion) => (
-                <div className="subtle-card" key={criterion.label}>
-                  <span className="metric-label">{criterion.label}</span>
-                  <p className="muted-copy" style={{ marginBottom: 0 }}>
-                    {criterion.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </AppShell>
   );

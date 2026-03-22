@@ -1,112 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { AGENTS } from "../lib/agents";
 import { AppShell } from "./shell";
 
 export function LandingPage() {
   return (
     <AppShell>
-      <section className="hero">
-        <div className="panel panel-padded">
-          <div className="eyebrow">Claude-coded rehearsal flow</div>
-          <h1 className="hero-title">
+      <section className="landing-shell">
+        <div className="landing-hero panel panel-padded">
+          <div className="eyebrow">PitchMirror</div>
+          <h1 className="hero-title landing-title">
             Rehearse the room before you ever walk into it.
           </h1>
-          <p className="hero-copy">
+          <p className="hero-copy landing-copy">
             PitchMirror pairs live Simli avatars with role-specific coaching
             surfaces so you can practice interviews, lectures, startup pitches,
             and high-pressure Q and A in one calm workspace.
           </p>
-          <div className="cta-row">
-            <Link href="#agents" className="btn btn-primary">
-              Choose an agent
+          <div className="landing-cta">
+            <Link href="/agents" className="btn btn-primary">
+              View agents
             </Link>
-            <a href="#workflow" className="btn btn-secondary">
-              View rehearsal flow
-            </a>
           </div>
         </div>
 
-        <div className="panel panel-padded">
+        <div className="session-feel-card panel panel-padded">
           <div className="section-title">How a session feels</div>
-          <div className="sidebar-stack">
-            <div className="subtle-card">
-              <div className="agent-badge">1. Prep</div>
-              <p className="muted-copy">
-                Upload a supporting PDF if you want grounded questions. The
-                deck uploads instantly when selected, and the session button
-                stays locked until processing finishes.
-              </p>
+          <div className="session-feel-row">
+            <div className="session-step">
+              <span className="session-step-number">1</span>
+              <div>
+                <strong>Set up</strong>
+                <p className="muted-copy">Pick a room, add context, upload a file if you want.</p>
+              </div>
             </div>
-            <div className="subtle-card">
-              <div className="agent-badge">2. Rehearse</div>
-              <p className="muted-copy">
-                Enter a Meet-style rehearsal room, grant mic access once, and
-                let the avatar begin the conversation in the same tab.
-              </p>
+            <div className="session-step">
+              <span className="session-step-number">2</span>
+              <div>
+                <strong>Rehearse</strong>
+                <p className="muted-copy">Join the live room and answer in a realistic back-and-forth.</p>
+              </div>
             </div>
-            <div className="subtle-card">
-              <div className="agent-badge">3. Review</div>
-              <p className="muted-copy">
-                End the session and return to static evaluation cards with a
-                rating prompt and summary metrics.
-              </p>
+            <div className="session-step">
+              <span className="session-step-number">3</span>
+              <div>
+                <strong>Review</strong>
+                <p className="muted-copy">Come back to your saved session for evaluation, resources, and comparison.</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section id="agents" className="grid-4">
-        {AGENTS.map((agent) => (
-          <Link
-            href={`/agents/${agent.slug}`}
-            className="agent-card"
-            key={agent.slug}
-          >
-            <div className="agent-title-row">
-              <div>
-                <div className="agent-badge">{agent.role}</div>
-                <h2 className="agent-title">{agent.name}</h2>
-              </div>
-              <div className="eyebrow">{agent.duration}</div>
-            </div>
-            <p className="agent-blurb">{agent.description}</p>
-            <div className="pill-row">
-              {agent.focus.map((item) => (
-                <span className="pill" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-            <div className="metrics-mini">
-              {agent.previewMetrics.map((metric) => (
-                <div className="metric-mini" key={metric.label}>
-                  <span className="metric-label">{metric.label}</span>
-                  <div className="metric-value">{metric.value}</div>
-                </div>
-              ))}
-            </div>
-          </Link>
-        ))}
-      </section>
-
-      <section id="workflow" className="grid-2" style={{ marginTop: 24 }}>
-        <div className="stat-card">
-          <div className="section-title">Scenario-specific rooms</div>
-          <p className="muted-copy">
-            Each room is framed around a different audience style, with
-            tailored goals, sample pressure points, and evaluation emphasis so
-            users can quickly pick the rehearsal context that fits the moment.
-          </p>
-        </div>
-        <div className="stat-card">
-          <div className="section-title">Minimal, responsive, same-tab flow</div>
-          <p className="muted-copy">
-            No popup windows. No exposed keys. No extra upload button. The
-            entire journey stays inside one responsive interface from landing to
-            live session to post-call review.
-          </p>
         </div>
       </section>
     </AppShell>

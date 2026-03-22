@@ -804,7 +804,6 @@ export function SessionPage({ slug }) {
       <div className="meet-shell">
         <div className="session-topbar">
           <div className="brand">
-            <div className="brand-mark">PM</div>
             <div>
               <div className="brand-title">{agent.name}</div>
               <div className="brand-subtitle">{agent.scenario}</div>
@@ -856,7 +855,7 @@ export function SessionPage({ slug }) {
                       Try again
                     </button>
                     <Link href={`/agents/${slug}`} className="btn btn-secondary">
-                      Back to setup
+                      <span aria-hidden="true">←</span> Back to setup
                     </Link>
                   </div>
                 </div>
@@ -884,7 +883,7 @@ export function SessionPage({ slug }) {
                   <p className="muted-copy">{statusText}</p>
                   <div className="button-row" style={{ justifyContent: "center", marginTop: 16 }}>
                     <button type="button" className="btn btn-danger" onClick={endSession}>
-                      Back to setup
+                      <span aria-hidden="true">←</span> Back to setup
                     </button>
                   </div>
                 </div>
