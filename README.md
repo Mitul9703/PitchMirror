@@ -2,6 +2,9 @@
 
 PitchMirror is an AI rehearsal room for high-stakes speaking scenarios. It helps users practice interviews, presentations, pitches, and live coding rounds with a realistic conversational agent, a live avatar, contextual grounding from uploaded documents, and post-session feedback.
 
+# Watch the Demo Video Here
+[Demo Video](https://drive.google.com/file/d/1I7WT0vLjOZpXAb_AuxLgiil2JQIEawz3/view?usp=sharing)
+
 ## Hackathon Tooling
 
 This project uses hackathon-required tools in meaningful product-facing ways:
